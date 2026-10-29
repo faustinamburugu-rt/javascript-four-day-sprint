@@ -1,2 +1,2 @@
 console.log("Hello from script.js");
-document.body.append("script.js is connected!");
+document.getElementById("btn").addEventListener("click",() =>{console.log("Button clicked!");});

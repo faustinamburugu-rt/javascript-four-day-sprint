@@ -14,7 +14,7 @@ console.log(Number("12"), Number("abc"));
 console.log(Number.isFinite(Number("12")), Number.isFinite(Number("abc")));
 
 console.log(2 + 3 * 4, (2 + 3) * 4);
-const totalMinutes = 137;
+const totalMinutes = 60;
 const hours =Math.floor(137 / 60);
 const minutes = 137 % 60;
 console.log(`${hours} hours and ${minutes} minutes`);

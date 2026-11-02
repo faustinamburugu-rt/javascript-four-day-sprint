@@ -93,3 +93,50 @@ try {
 }
 
 console.log("Original still unchanged:", taskSnapshot === JSON.stringify(sampleTasks));      // true
+// ===== Day 2, Block 2: array methods as readable tools =====
+
+// Step 21: filter, map, find
+const openTasks = sampleTasks.filter(task => !task.completed);
+const openTitles = openTasks.map(task => task.title);
+const taskThree = sampleTasks.find(task => task.id === 3);
+console.log("Open titles:", openTitles);          // ["Read brief", "Write tests", "Review code"]
+console.log("Task 3:", taskThree.title);          // Write tests
+
+// Step 22: some and every
+const hasHighPriority = sampleTasks.some(task => task.priority === "high");
+const allDone = sampleTasks.every(task => task.completed);
+console.log("Any high priority:", hasHighPriority);   // true
+console.log("All complete:", allDone);               // false
+
+// Step 23: reduce, completed tasks counted by priority
+const completedByPriority = sampleTasks.reduce((counts, task) => {
+    if (task.completed) {
+        counts[task.priority] = (counts[task.priority] || 0) + 1;
+    }
+    return counts;
+}, {});
+console.log("Completed by priority:", completedByPriority);  // { medium: 2 }
+
+// Step 24: the same chain, written with named steps
+const openTitlesChained = sampleTasks.filter(task => !task.completed).map(task => task.title);
+console.log("Chain matches named steps:", JSON.stringify(openTitlesChained) === JSON.stringify(openTitles)); // true
+// ===== Challenge 6: purchase summary =====
+// Empty list: returns zeros and null. Tie for most expensive: the first one wins.
+function summarizePurchases(purchases) {
+    if (purchases.length === 0) {
+        return { total: 0, count: 0, average: 0, mostExpensive: null };
+    }
+    const total = purchases.reduce((sum, purchase) => sum + purchase.price, 0);
+    let mostExpensive = purchases[0];
+    for (const purchase of purchases) {
+        if (purchase.price > mostExpensive.price) {
+            mostExpensive = purchase;
+        }
+    }
+    return { total, count: purchases.length, average: total / purchases.length, mostExpensive };
+}
+
+console.log("Summary:", summarizePurchases([{ name: "Pen", price: 2 }, { name: "Book", price: 10 }, { name: "Bag", price: 8 }]));
+console.log("Empty:", summarizePurchases([]));
+console.log("One item:", summarizePurchases([{ name: "Pen", price: 2 }]));
+console.log("Tie:", summarizePurchases([{ name: "A", price: 9 }, { name: "B", price: 9 }]).mostExpensive.name); // A

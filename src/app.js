@@ -60,3 +60,54 @@ console.log(gradeLabel(0));
 console.log(gradeLabel(100));
 console.log(gradeLabel(-1));
 console.log(gradeLabel(101));
+
+// TASK 1: Calculate prices and count prices above 20
+
+const prices = [5, 12, 25, 8, 30];
+
+let total = 0;
+let count = 0;
+
+if (prices.length === 0) {
+    console.log("No prices available");
+} else {
+    for (const price of prices) {
+        total += price;
+
+        if (price > 20) {
+            count++;
+        }
+    }
+
+    console.log("Total:", total);
+    console.log("Prices above 20:", count);
+}
+
+// TASK 2: FizzBuzz
+function fizzBuzz(limit) {
+    const results = [];
+
+    for (let i = 1; i <= limit; i++) {
+        if (i % 3 === 0 && i % 5 === 0) {
+            results.push("FizzBuzz");
+        } else if (i % 3 === 0) {
+            results.push("Fizz");
+        } else if (i % 5 === 0) {
+            results.push("Buzz");
+        } else {
+            results.push(i);
+        }
+    }
+
+    return results;
+}
+
+// Test FizzBuzz
+console.log("FizzBuzz 15:", fizzBuzz(15));
+console.log("FizzBuzz 16:", fizzBuzz(16));
+const reducedTotal = prices.reduce(
+    (sum, price) => sum + price,
+    0
+);
+
+console.log("Total with reduce:", reducedTotal);

@@ -105,9 +105,201 @@ function fizzBuzz(limit) {
 // Test FizzBuzz
 console.log("FizzBuzz 15:", fizzBuzz(15));
 console.log("FizzBuzz 16:", fizzBuzz(16));
-const reducedTotal = prices.reduce(
-    (sum, price) => sum + price,
-    0
-);
+// ===== Block 4: functions and testable logic =====
 
-console.log("Total with reduce:", reducedTotal);
+
+// 1. Calculate line total and apply discount
+function calculateLineTotal(price, quantity) {
+    if (
+        !Number.isFinite(price) ||
+        !Number.isInteger(quantity) ||
+        price < 0 ||
+        quantity < 0
+    ) {
+        throw new Error(
+            "Price and quantity must be valid non-negative numbers."
+        );
+    }
+
+    let lineTotal = price * quantity;
+
+    // Quantities above 5 receive a 5% discount
+    if (quantity > 5) {
+        lineTotal = lineTotal * 0.95;
+    }
+
+    return lineTotal;
+}
+
+
+// 2. Calculate tax
+function calculateTax(subtotal, taxRate) {
+    if (
+        !Number.isFinite(subtotal) ||
+        !Number.isFinite(taxRate) ||
+        subtotal < 0 ||
+        taxRate < 0
+    ) {
+        throw new Error("Invalid subtotal or tax rate.");
+    }
+
+    return subtotal * taxRate;
+}
+
+
+// 3. Format money to 2 decimal places
+function formatMoney(amount) {
+    if (!Number.isFinite(amount)) {
+        throw new Error("Amount must be a valid number.");
+    }
+
+    return amount.toFixed(2);
+}
+
+
+// 4. Build the receipt
+function printReceipt(items) {
+    if (!Array.isArray(items)) {
+        throw new Error("Items must be an array.");
+    }
+
+    let subtotal = 0;
+    const taxRate = 0.08;
+
+    for (const item of items) {
+        if (!item) {
+            throw new Error("Invalid item.");
+        }
+
+        const lineTotal = calculateLineTotal(
+            item.price,
+            item.quantity
+        );
+
+        subtotal += lineTotal;
+    }
+
+    // Calculate tax AFTER all discounts
+    const tax = calculateTax(subtotal, taxRate);
+
+    const total = subtotal + tax;
+
+    // Return the formatted receipt
+    return `Subtotal: $${formatMoney(subtotal)}
+Tax: $${formatMoney(tax)}
+Total: $${formatMoney(total)}`;
+}
+
+
+// 5. Manual test helper
+function runTest(testName, testFunction) {
+    try {
+        testFunction();
+        console.log("PASS: " + testName);
+    } catch (error) {
+        console.log("FAIL: " + testName + " - " + error.message);
+    }
+}
+
+
+// TEST 1: Discounted cart and tax order
+runTest("Discount before tax", () => {
+    const result = printReceipt([
+        { price: 100, quantity: 6 },
+        { price: 50, quantity: 2 }
+    ]);
+
+    const expected = `Subtotal: $670.00
+Tax: $53.60
+Total: $723.60`;
+
+    if (result !== expected) {
+        throw new Error("Incorrect discounted cart calculation.");
+    }
+});
+
+
+// TEST 2: Zero quantity
+runTest("Zero quantity", () => {
+    const result = printReceipt([
+        { price: 10, quantity: 0 }
+    ]);
+
+    const expected = `Subtotal: $0.00
+Tax: $0.00
+Total: $0.00`;
+
+    if (result !== expected) {
+        throw new Error("Incorrect zero quantity calculation.");
+    }
+});
+
+
+// TEST 3: Decimal price
+runTest("Decimal price", () => {
+    const result = printReceipt([
+        { price: 19.99, quantity: 2 }
+    ]);
+
+    const expected = `Subtotal: $39.98
+Tax: $3.20
+Total: $43.18`;
+
+    if (result !== expected) {
+        throw new Error("Incorrect decimal price calculation.");
+    }
+});
+
+
+// TEST 4: Negative price
+runTest("Negative price", () => {
+    let errorCaught = false;
+
+    try {
+        printReceipt([
+            { price: -5, quantity: 2 }
+        ]);
+    } catch (error) {
+        errorCaught = true;
+    }
+
+    if (!errorCaught) {
+        throw new Error("Negative price should throw an error.");
+    }
+});
+
+
+// TEST 5: Decimal quantity
+runTest("Decimal quantity", () => {
+    let errorCaught = false;
+
+    try {
+        printReceipt([
+            { price: 10, quantity: 2.5 }
+        ]);
+    } catch (error) {
+        errorCaught = true;
+    }
+
+    if (!errorCaught) {
+        throw new Error("Decimal quantity should throw an error.");
+    }
+});
+
+
+// TEST 6: Text instead of price
+runTest("Invalid text price", () => {
+    let errorCaught = false;
+
+    try {
+        printReceipt([
+            { price: "abc", quantity: 1 }
+        ]);
+    } catch (error) {
+        errorCaught = true;
+    }
+
+    if (!errorCaught) {
+        throw new Error("Text price should throw an error.");
+    }
+});

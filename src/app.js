@@ -237,3 +237,46 @@ runTest("Decimal quantity is rejected", () => {
 runTest("Text price is rejected", () => {
     expectThrow(() => printReceipt([{ price: "abc", quantity: 1 }]));
 });
+// ===== Day 3, Block 1: render and search =====
+const taskListElement = document.querySelector("#task-list");
+const searchInput = document.querySelector("#search");
+
+function renderTasks(tasksToShow) {
+    taskListElement.textContent = "";
+
+    if (tasksToShow.length === 0) {
+        const emptyItem = document.createElement("li");
+        emptyItem.textContent = "No tasks yet.";
+        taskListElement.append(emptyItem);
+        return;
+    }
+
+    for (const task of tasksToShow) {
+        const item = document.createElement("li");
+        item.textContent = `${task.title} (${task.priority})`;
+        if (task.completed) {
+            item.classList.add("completed");
+        }
+        taskListElement.append(item);
+    }
+}
+
+// Challenge 9: case-insensitive search. Returns a view; the stored tasks never change.
+function searchTasks(tasks, query) {
+    const cleaned = query.trim().toLowerCase();
+    if (!cleaned) {
+        return tasks;
+    }
+    return tasks.filter(task => task.title.toLowerCase().includes(cleaned));
+}
+
+renderTasks(sampleTasks);
+
+searchInput.addEventListener("input", () => {
+    renderTasks(searchTasks(sampleTasks, searchInput.value));
+});
+
+console.log("Search empty:", searchTasks(sampleTasks, "").length);          // 5
+console.log("Search mixed case:", searchTasks(sampleTasks, "WrItE").length); // 1
+console.log("Search with spaces:", searchTasks(sampleTasks, "  write  ").length); // 1
+console.log("Search no match:", searchTasks(sampleTasks, "zzz").length);     // 0

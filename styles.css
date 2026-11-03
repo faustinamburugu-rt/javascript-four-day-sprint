@@ -1,1 +1,6 @@
 .completed { text-decoration: line-through; color: gray; }
+.error { color: #b00020; margin: 4px 0; }
+button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 3px solid #1a73e8;
+    outline-offset: 2px;
+}

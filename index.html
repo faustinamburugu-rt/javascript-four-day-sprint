@@ -12,8 +12,29 @@
   </header>
 
   <main>
+    <form id="task-form">
+      <label for="title">Task title</label>
+      <input type="text" id="title" name="title">
+
+      <label for="priority">Priority</label>
+      <select id="priority" name="priority">
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+
+      <button type="submit">Add task</button>
+    </form>
+
     <label for="search">Search tasks</label>
     <input type="search" id="search">
+
+    <label for="status-filter">Show</label>
+    <select id="status-filter">
+      <option value="all">All</option>
+      <option value="open">Open</option>
+      <option value="completed">Completed</option>
+    </select>
 
     <ul id="task-list"></ul>
     <p id="status" aria-live="polite"></p>

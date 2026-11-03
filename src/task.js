@@ -140,3 +140,93 @@ console.log("Summary:", summarizePurchases([{ name: "Pen", price: 2 }, { name: "
 console.log("Empty:", summarizePurchases([]));
 console.log("One item:", summarizePurchases([{ name: "Pen", price: 2 }]));
 console.log("Tie:", summarizePurchases([{ name: "A", price: 9 }, { name: "B", price: 9 }]).mostExpensive.name); // A
+// ===== Day 2, Block 3: classes =====
+
+class Task {
+    #completed = false;
+
+    constructor(id, title, priority = "normal") {
+        if (typeof title !== "string" || !title.trim()) {
+            throw new Error("Title is required");
+        }
+        this.id = id;
+        this.title = title.trim();
+        this.priority = priority;
+    }
+
+    get completed() { return this.#completed; }
+    complete() { this.#completed = true; }
+    toggle() { this.#completed = !this.#completed; }
+    rename(newTitle) {
+        if (typeof newTitle !== "string" || !newTitle.trim()) {
+            throw new Error("Title is required");
+        }
+        this.title = newTitle.trim();
+    }
+    describe() { return `${this.title} (${this.priority})`; }
+}
+
+class TaskList {
+    #tasks = [];
+
+    add(task) {
+        if (this.findById(task.id)) throw new Error("Task ID already exists.");
+        this.#tasks.push(task);
+    }
+    remove(id) { this.#tasks = this.#tasks.filter(task => task.id !== id); }
+    findById(id) { return this.#tasks.find(task => task.id === id); }
+    getOpenTasks() { return this.#tasks.filter(task => !task.completed); }
+}
+
+const demoTask = new Task(10, "Study classes", "high");
+console.log("New task completed?", demoTask.completed);        // false
+demoTask.complete();
+console.log("After complete():", demoTask.completed);          // true
+console.log("Describe:", demoTask.describe());                 // Study classes (high)
+
+const demoList = new TaskList();
+demoList.add(new Task(1, "First"));
+demoList.add(new Task(2, "Second"));
+demoList.findById(1).complete();
+console.log("Open tasks:", demoList.getOpenTasks().length);    // 1
+
+// ===== Challenge 7: inheritance and composition =====
+
+class Reminder extends Task {
+    constructor(id, title, priority, dueDate) {
+        super(id, title, priority);
+        this.dueDate = dueDate;
+    }
+    describe() { return `${super.describe()} due ${this.dueDate}`; }
+}
+
+const demoReminder = new Reminder(11, "Submit work", "high", "2026-11-03");
+console.log("Reminder:", demoReminder.describe());             // Submit work (high) due 2026-11-03
+
+// Composition: a plain task with optional reminder data attached
+const composedTask = { task: new Task(12, "Call mentor"), reminder: { dueDate: "2026-11-04" } };
+console.log("Composition:", composedTask.task.describe(), composedTask.reminder.dueDate);
+
+// ===== Challenge 8: task statistics =====
+// Empty list: completionRate is 0.
+function getTaskStats(tasks) {
+    const total = tasks.length;
+    const completed = tasks.filter(task => task.completed).length;
+    const byPriority = tasks.reduce((counts, task) => {
+        counts[task.priority] = (counts[task.priority] || 0) + 1;
+        return counts;
+    }, {});
+    return {
+        total,
+        completed,
+        open: total - completed,
+        completionRate: total === 0 ? 0 : Math.round((completed / total) * 100),
+        byPriority
+    };
+}
+
+const stats = getTaskStats(sampleTasks);
+console.log("Stats:", stats);   // total 5, completed 2, open 3, completionRate 40, byPriority { high: 2, medium: 2, low: 1 }
+console.log("Total = completed + open:", stats.total === stats.completed + stats.open);                                   // true
+console.log("Priority counts sum to total:", Object.values(stats.byPriority).reduce((a, b) => a + b, 0) === stats.total); // true
+console.log("Empty list:", getTaskStats([]));   // total 0, completionRate 0

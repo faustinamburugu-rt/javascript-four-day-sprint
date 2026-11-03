@@ -230,3 +230,56 @@ console.log("Stats:", stats);   // total 5, completed 2, open 3, completionRate 
 console.log("Total = completed + open:", stats.total === stats.completed + stats.open);                                   // true
 console.log("Priority counts sum to total:", Object.values(stats.byPriority).reduce((a, b) => a + b, 0) === stats.total); // true
 console.log("Empty list:", getTaskStats([]));   // total 0, completionRate 0
+// ===== Day 2, Block 4: repository, helper and tests =====
+
+// Step 31: one named helper for repeated title validation
+function validateTitle(title) {
+    if (typeof title !== "string" || !title.trim()) {
+        throw new Error("Title is required");
+    }
+    return title.trim();
+}
+
+// Step 29: storage-shaped operations. Task owns behaviour, the repository owns the collection.
+class TaskRepository {
+    #tasks = [];
+
+    save(task) {
+        if (this.findById(task.id)) throw new Error("Task ID already exists.");
+        this.#tasks.push(task);
+        return task;
+    }
+    findById(id) { return this.#tasks.find(task => task.id === id); }
+    getAll() { return [...this.#tasks]; }
+    getOpen() { return this.#tasks.filter(task => !task.completed); }
+}
+
+// Step 30: manual tests (create, complete, filter open, reject invalid title)
+const repo = new TaskRepository();
+repo.save(new Task(1, "Write notes", "high"));
+repo.save(new Task(2, "Push code", "low"));
+console.log("Created:", repo.getAll().length === 2 ? "PASS" : "FAIL");
+
+repo.findById(1).complete();
+console.log("Complete:", repo.findById(1).completed === true ? "PASS" : "FAIL");
+console.log("Filter open:", repo.getOpen().length === 1 ? "PASS" : "FAIL");
+
+try {
+    new Task(3, "   ", "low");
+    console.log("Invalid title: FAIL (should have thrown)");
+} catch (error) {
+    console.log("Invalid title: PASS -", error.message);
+}
+
+// Step 32: edge cases
+console.log("Empty list stats:", getTaskStats([]).completionRate === 0 ? "PASS" : "FAIL");
+console.log("One item stats:", getTaskStats([new Task(9, "Solo")]).total === 1 ? "PASS" : "FAIL");
+
+try {
+    repo.save(new Task(1, "Duplicate id"));
+    console.log("Duplicate id: FAIL (should have thrown)");
+} catch (error) {
+    console.log("Duplicate id: PASS -", error.message);
+}
+
+console.log("Unknown id:", repo.findById(99) === undefined ? "PASS" : "FAIL");

@@ -25,4 +25,8 @@ every() = All of them?
 
 reduce() = Combine into one result.
 this is because Because each function has a different responsibility.
-the harsh value #complete makes the class private while the complete() make it true and toggle() make it true or false it switches in between the two. 
+the harsh value #complete makes the class private while the complete() make it true and toggle() make it true or false it switches in between the
+Update task	map() + spread	New array and updated object
+Delete task	filter()	New array
+Rename task	map() + spread	New array and updated object
+Complete task	map() + spread	New array and updated object 

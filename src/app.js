@@ -14,11 +14,16 @@ console.log(Number("12"), Number("abc"));
 console.log(Number.isFinite(Number("12")), Number.isFinite(Number("abc")));
 
 console.log(2 + 3 * 4, (2 + 3) * 4);
-const totalMinutes = 60;
-const hours =Math.floor(137 / 60);
-const minutes = 137 % 60;
+// Version 1: Math.floor and %
+const totalMinutes = 137;
+const hours = Math.floor(totalMinutes / 60);
+const minutes = totalMinutes % 60;
 console.log(`${hours} hours and ${minutes} minutes`);
 
+// Version 2: subtraction instead of %
+const hours2 = Math.floor(totalMinutes / 60);
+const minutes2 = totalMinutes - hours2 * 60;
+console.log(`${hours2} hours and ${minutes2} minutes`);
 function getDiscountedTotal(total, member) {
     if (!Number.isFinite(total) || total < 0) {
         return null;
@@ -246,7 +251,17 @@ const titleInput = document.querySelector("#title");
 const statusElement = document.querySelector("#status");
 
 // One source of truth. Handlers change this, then render() shows it.
-let currentTasks = [...sampleTasks];
+const loadResult = loadTasks(sampleTasks);
+let currentTasks = loadResult.tasks;
+if (loadResult.notice) {
+    statusElement.textContent = loadResult.notice;
+}
+
+function persist() {
+    if (!saveTasks(currentTasks)) {
+        statusElement.textContent = "Could not save your tasks. Changes may be lost on reload.";
+    }
+}
 let currentQuery = "";
 let currentFilter = "all";
 
@@ -310,9 +325,10 @@ taskListElement.addEventListener("click", event => {
     if (button.dataset.action === "toggle") {
         currentTasks = toggleTask(currentTasks, id);
     }
-    if (button.dataset.action === "delete") {
+       if (button.dataset.action === "delete") {
         currentTasks = deleteTask(currentTasks, id);
     }
+    persist();
     render();
 });
 
@@ -362,10 +378,11 @@ taskForm.addEventListener("submit", event => {
         createdAt: new Date().toISOString().slice(0, 10)
     });
 
-    titleError.textContent = "";
+      titleError.textContent = "";
     titleInput.removeAttribute("aria-invalid");
     taskForm.reset();
     statusElement.textContent = `Added: ${result.value}`;
+       persist();
     titleInput.focus();
     render();
 });

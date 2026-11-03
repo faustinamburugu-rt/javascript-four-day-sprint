@@ -237,9 +237,30 @@ runTest("Decimal quantity is rejected", () => {
 runTest("Text price is rejected", () => {
     expectThrow(() => printReceipt([{ price: "abc", quantity: 1 }]));
 });
-// ===== Day 3, Block 1: render and search =====
+// ===== Day 3, Block 2: events and filters =====
 const taskListElement = document.querySelector("#task-list");
 const searchInput = document.querySelector("#search");
+const filterSelect = document.querySelector("#status-filter");
+const taskForm = document.querySelector("#task-form");
+const titleInput = document.querySelector("#title");
+const statusElement = document.querySelector("#status");
+
+// One source of truth. Handlers change this, then render() shows it.
+let currentTasks = [...sampleTasks];
+let currentQuery = "";
+let currentFilter = "all";
+
+// Challenge 10: pure function. Composes search and status filtering, returns a view.
+function getVisibleTasks(tasks, query, status) {
+    const cleaned = query.trim().toLowerCase();
+    return tasks
+        .filter(task => !cleaned || task.title.toLowerCase().includes(cleaned))
+        .filter(task => {
+            if (status === "open") return !task.completed;
+            if (status === "completed") return task.completed;
+            return true;
+        });
+}
 
 function renderTasks(tasksToShow) {
     taskListElement.textContent = "";
@@ -253,30 +274,91 @@ function renderTasks(tasksToShow) {
 
     for (const task of tasksToShow) {
         const item = document.createElement("li");
-        item.textContent = `${task.title} (${task.priority})`;
+        const label = document.createElement("span");
+        label.textContent = `${task.title} (${task.priority}) `;
         if (task.completed) {
-            item.classList.add("completed");
+            label.classList.add("completed");
         }
+
+        const toggleButton = document.createElement("button");
+        toggleButton.type = "button";
+        toggleButton.textContent = task.completed ? "Undo" : "Complete";
+        toggleButton.dataset.action = "toggle";
+        toggleButton.dataset.taskId = task.id;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete";
+        deleteButton.dataset.action = "delete";
+        deleteButton.dataset.taskId = task.id;
+
+        item.append(label, toggleButton, deleteButton);
         taskListElement.append(item);
     }
 }
 
-// Challenge 9: case-insensitive search. Returns a view; the stored tasks never change.
-function searchTasks(tasks, query) {
-    const cleaned = query.trim().toLowerCase();
-    if (!cleaned) {
-        return tasks;
-    }
-    return tasks.filter(task => task.title.toLowerCase().includes(cleaned));
+function render() {
+    renderTasks(getVisibleTasks(currentTasks, currentQuery, currentFilter));
 }
 
-renderTasks(sampleTasks);
+// Event delegation: one listener on the list handles every button
+taskListElement.addEventListener("click", event => {
+    const button = event.target.closest("button[data-action]");
+    if (!button) return;
 
-searchInput.addEventListener("input", () => {
-    renderTasks(searchTasks(sampleTasks, searchInput.value));
+    const id = Number(button.dataset.taskId);
+    if (button.dataset.action === "toggle") {
+        currentTasks = toggleTask(currentTasks, id);
+    }
+    if (button.dataset.action === "delete") {
+        currentTasks = deleteTask(currentTasks, id);
+    }
+    render();
 });
 
-console.log("Search empty:", searchTasks(sampleTasks, "").length);          // 5
-console.log("Search mixed case:", searchTasks(sampleTasks, "WrItE").length); // 1
-console.log("Search with spaces:", searchTasks(sampleTasks, "  write  ").length); // 1
-console.log("Search no match:", searchTasks(sampleTasks, "zzz").length);     // 0
+// Form submit: validate, create, update state, render
+taskForm.addEventListener("submit", event => {
+    event.preventDefault();
+
+    const formData = new FormData(taskForm);
+    const title = String(formData.get("title") || "").trim();
+    const priority = formData.get("priority");
+
+    if (!title) {
+        statusElement.textContent = "Please enter a task title.";
+        return;
+    }
+
+    const newId = Math.max(0, ...currentTasks.map(task => task.id)) + 1;
+    currentTasks = addTask(currentTasks, {
+        id: newId,
+        title: title,
+        priority: priority,
+        createdAt: new Date().toISOString().slice(0, 10)
+    });
+
+    taskForm.reset();
+    statusElement.textContent = "Task added.";
+    titleInput.focus();
+    render();
+});
+
+searchInput.addEventListener("input", () => {
+    currentQuery = searchInput.value;
+    render();
+});
+
+filterSelect.addEventListener("change", () => {
+    currentFilter = filterSelect.value;
+    render();
+});
+
+render();
+
+// Challenge 10 checks
+const visibleSnapshot = JSON.stringify(currentTasks);
+console.log("Open count:", getVisibleTasks(currentTasks, "", "open").length);           // 3
+console.log("Completed count:", getVisibleTasks(currentTasks, "", "completed").length); // 2
+console.log("Search + open:", getVisibleTasks(currentTasks, "WRITE", "open").length);   // 1
+console.log("Search + completed:", getVisibleTasks(currentTasks, "write", "completed").length); // 0
+console.log("Source unchanged:", visibleSnapshot === JSON.stringify(currentTasks));     // true

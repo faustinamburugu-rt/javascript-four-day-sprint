@@ -30,3 +30,8 @@ Update task	map() + spread	New array and updated object
 Delete task	filter()	New array
 Rename task	map() + spread	New array and updated object
 Complete task	map() + spread	New array and updated object 
+TextContent treats everything as plain text, while innerHTML interprets content as HTML code.
+SearchTasks returns a filtered copy because searching should find matching tasks without changing your original task list, sampleTasks.
+CurrentTasks = it keeps the original data
+GetVisibleTasks() = calculates which tasks should appear.
+Render() = displays those visible tasks.

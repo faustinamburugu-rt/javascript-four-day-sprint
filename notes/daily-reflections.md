@@ -25,3 +25,4 @@ every() = All of them?
 
 reduce() = Combine into one result.
 this is because Because each function has a different responsibility.
+the harsh value #complete makes the class private while the complete() make it true and toggle() make it true or false it switches in between the two. 

@@ -316,29 +316,56 @@ taskListElement.addEventListener("click", event => {
     render();
 });
 
-// Form submit: validate, create, update state, render
+// Challenge 11: validation is separate from the DOM.
+// Returns the cleaned title, or a list of errors. Duplicates ignore case and surrounding spaces.
+function validateTaskInput(rawTitle, tasks) {
+    const errors = [];
+    const value = String(rawTitle || "").trim();
+
+    if (value.length < 1) {
+        errors.push("Please enter a task title.");
+    } else if (value.length > 80) {
+        errors.push("Title must be 80 characters or fewer.");
+    }
+
+    const isDuplicate = tasks.some(
+        task => task.title.trim().toLowerCase() === value.toLowerCase()
+    );
+    if (value && isDuplicate) {
+        errors.push("That task already exists.");
+    }
+
+    return { value, errors };
+}
+
+const titleError = document.querySelector("#title-error");
+
 taskForm.addEventListener("submit", event => {
     event.preventDefault();
 
     const formData = new FormData(taskForm);
-    const title = String(formData.get("title") || "").trim();
     const priority = formData.get("priority");
+    const result = validateTaskInput(formData.get("title"), currentTasks);
 
-    if (!title) {
-        statusElement.textContent = "Please enter a task title.";
+    if (result.errors.length > 0) {
+        titleError.textContent = result.errors[0];
+        titleInput.setAttribute("aria-invalid", "true");
+        titleInput.focus();
         return;
     }
 
     const newId = Math.max(0, ...currentTasks.map(task => task.id)) + 1;
     currentTasks = addTask(currentTasks, {
         id: newId,
-        title: title,
+        title: result.value,
         priority: priority,
         createdAt: new Date().toISOString().slice(0, 10)
     });
 
+    titleError.textContent = "";
+    titleInput.removeAttribute("aria-invalid");
     taskForm.reset();
-    statusElement.textContent = "Task added.";
+    statusElement.textContent = `Added: ${result.value}`;
     titleInput.focus();
     render();
 });
@@ -357,8 +384,13 @@ render();
 
 // Challenge 10 checks
 const visibleSnapshot = JSON.stringify(currentTasks);
-console.log("Open count:", getVisibleTasks(currentTasks, "", "open").length);           // 3
-console.log("Completed count:", getVisibleTasks(currentTasks, "", "completed").length); // 2
-console.log("Search + open:", getVisibleTasks(currentTasks, "WRITE", "open").length);   // 1
-console.log("Search + completed:", getVisibleTasks(currentTasks, "write", "completed").length); // 0
-console.log("Source unchanged:", visibleSnapshot === JSON.stringify(currentTasks));     // true
+console.log("Open count:", getVisibleTasks(currentTasks, "", "open").length);            // 3
+console.log("Completed count:", getVisibleTasks(currentTasks, "", "completed").length);  // 2
+console.log("Search + open:", getVisibleTasks(currentTasks, "WRITE", "open").length);    // 1
+console.log("Source unchanged:", visibleSnapshot === JSON.stringify(currentTasks));      // true
+
+// Challenge 11 checks
+console.log("Duplicate exact:", validateTaskInput("Write tests", sampleTasks).errors.length);              // 1
+console.log("Duplicate spaced and cased:", validateTaskInput(" write tests ", sampleTasks).errors.length); // 1
+console.log("Distinct title:", validateTaskInput("Write docs", sampleTasks).errors.length);                // 0
+console.log("Blank title:", validateTaskInput("   ", sampleTasks).errors.length);                          // 1

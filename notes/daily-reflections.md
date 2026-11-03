@@ -24,3 +24,4 @@ every() = All of them?
 
 
 reduce() = Combine into one result.
+this is because Because each function has a different responsibility.

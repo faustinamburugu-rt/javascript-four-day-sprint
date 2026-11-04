@@ -39,6 +39,16 @@
 
     <ul id="task-list"></ul>
     <p id="status" aria-live="polite"></p>
+    <p id="stats"></p>
+    <button type="button" id="undo-button" hidden>Undo delete</button>
+
+    <section>
+      <h2>Backup</h2>
+      <button type="button" id="export-button">Export JSON</button>
+      <label for="import-file">Import JSON</label>
+      <input type="file" id="import-file" accept="application/json">
+      <p id="backup-status" aria-live="polite"></p>
+    </section>
     <section>
       <h2>Suggestions</h2>
       <button type="button" id="suggest-button">Load suggestions</button>

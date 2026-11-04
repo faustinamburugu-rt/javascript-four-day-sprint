@@ -24,7 +24,8 @@ every() = All of them?
 
 
 reduce() = Combine into one result.
-this is because Because each function has a different responsibility.
+this is because Because each function has a different
+responsibility.
 the harsh value #complete makes the class private while the complete() make it true and toggle() make it true or false it switches in between the
 Update task	map() + spread	New array and updated object
 Delete task	filter()	New array
@@ -40,3 +41,9 @@ Promise.all() is useful for independent requests, but one rejection rejects the 
 Local task features must work without internet.
 Validate external data before using it.
 Check response.ok before reading the response body as JSON.
+
+- Undo stores the task and its index.
+- Undo restores the task and clears the undo record.
+- A new deletion replaces the previous undo record.
+- JSON imports are validated before replacing existing tasks.
+- Blank files are rejected; valid empty arrays can intentionally clear the list after confirmation.

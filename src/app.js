@@ -243,12 +243,14 @@ const searchInput = document.querySelector("#search");
 const filterSelect = document.querySelector("#status-filter");
 const taskForm = document.querySelector("#task-form");
 const titleInput = document.querySelector("#title");
-const statusElement = document.querySelector("#status");
-
+const statsElement = document.querySelector("#stats");
+const undoButton = document.querySelector("#undo-button");
+const backupStatus = document.querySelector("#backup-status");
 // One source of truth. Handlers change this, then render() shows it.
 let currentTasks = [...sampleTasks];
 let currentQuery = "";
 let currentFilter = "all";
+let lastDeleted = null;   // { task, index } for the most recent delete only
 
 // Challenge 10: pure function. Composes search and status filtering, returns a view.
 function getVisibleTasks(tasks, query, status) {
@@ -299,6 +301,10 @@ function renderTasks(tasksToShow) {
 
 function render() {
     renderTasks(getVisibleTasks(currentTasks, currentQuery, currentFilter));
+    undoButton.hidden = lastDeleted === null;
+    const stats = getTaskStats(currentTasks);
+    statsElement.textContent =
+        `Total ${stats.total} | Open ${stats.open} | Done ${stats.completed} (${stats.completionRate}%)`;
 }
 
 // Event delegation: one listener on the list handles every button
@@ -310,8 +316,12 @@ taskListElement.addEventListener("click", event => {
     if (button.dataset.action === "toggle") {
         currentTasks = toggleTask(currentTasks, id);
     }
-    if (button.dataset.action === "delete") {
-        currentTasks = deleteTask(currentTasks, id);
+       if (button.dataset.action === "delete") {
+        const index = currentTasks.findIndex(task => task.id === id);
+        if (index !== -1) {
+            lastDeleted = { task: currentTasks[index], index: index };
+            currentTasks = deleteTask(currentTasks, id);
+        }
     }
     render();
 });
@@ -458,4 +468,91 @@ suggestionsList.addEventListener("click", event => {
     if (!button) return;
     titleInput.value = suggestionItems[Number(button.dataset.index)].title;
     titleInput.focus();
+
 });
+// ===== Challenge 15: undo delete =====
+// Transitions: delete -> remember {task, index}. Undo -> restore at that position and clear.
+// A new delete replaces the remembered one, so only the most recent delete can be undone.
+function restoreDeleted(tasks, entry) {
+    const copy = [...tasks];
+    copy.splice(Math.min(entry.index, copy.length), 0, entry.task);
+    return copy;
+}
+
+undoButton.addEventListener("click", () => {
+    if (!lastDeleted) return;
+    currentTasks = restoreDeleted(currentTasks, lastDeleted);
+    lastDeleted = null;
+    persist();
+    render();
+});
+
+// Two sequential deletions: only the second can be undone
+const undoDemo = [{ id: 1, title: "A" }, { id: 2, title: "B" }, { id: 3, title: "C" }];
+const entryA = { task: undoDemo[0], index: 0 };
+const afterA = deleteTask(undoDemo, 1);
+const entryB = { task: afterA[0], index: 0 };
+const afterB = deleteTask(afterA, 2);
+console.log("After two deletes:", afterB.map(t => t.id).join(","));                      // 3
+console.log("Undo restores only B:", restoreDeleted(afterB, entryB).map(t => t.id).join(",")); // 2,3
+
+// ===== Challenge 16: JSON export and import =====
+function parseImport(text) {
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch (error) {
+        return { ok: false, error: "The file is not valid JSON." };
+    }
+    if (!Array.isArray(data)) {
+        return { ok: false, error: "The file must contain a list of tasks." };
+    }
+    if (data.length === 0) {
+        return { ok: false, error: "The file contains no tasks." };   // rule: empty imports are rejected
+    }
+    if (!data.every(isValidTask)) {
+        return { ok: false, error: "Some tasks are missing required fields." };
+    }
+    const ids = new Set(data.map(task => task.id));
+    if (ids.size !== data.length) {
+        return { ok: false, error: "Task ids must be unique." };
+    }
+    return { ok: true, tasks: data };
+}
+
+document.querySelector("#export-button").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(currentTasks, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "tasks.json";
+    link.click();
+    URL.revokeObjectURL(url);
+    backupStatus.textContent = "Exported tasks.json.";
+});
+
+const importFile = document.querySelector("#import-file");
+importFile.addEventListener("change", async () => {
+    const file = importFile.files[0];
+    if (!file) return;
+
+    const result = parseImport(await file.text());
+    if (!result.ok) {
+        backupStatus.textContent = `Import failed: ${result.error} Your tasks are unchanged.`;
+    } else if (confirm(`Replace your ${currentTasks.length} tasks with ${result.tasks.length} imported tasks?`)) {
+        currentTasks = result.tasks;
+        lastDeleted = null;
+        persist();
+        render();
+        backupStatus.textContent = `Imported ${result.tasks.length} tasks.`;
+    } else {
+        backupStatus.textContent = "Import cancelled. Your tasks are unchanged.";
+    }
+    importFile.value = "";
+});
+
+// Import checks
+console.log("Valid import:", parseImport('[{"id":1,"title":"A","completed":false,"priority":"low"}]').ok);  // true
+console.log("Malformed import:", parseImport("not-json").ok);                                               // false
+console.log("Empty import:", parseImport("[]").ok);                                                         // false
+console.log("Invalid structure:", parseImport('[{"id":"x"}]').ok);                                          // false

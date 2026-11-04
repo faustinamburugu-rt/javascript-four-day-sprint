@@ -35,3 +35,8 @@ SearchTasks returns a filtered copy because searching should find matching tasks
 CurrentTasks = it keeps the original data
 GetVisibleTasks() = calculates which tasks should appear.
 Render() = displays those visible tasks.
+
+Promise.all() is useful for independent requests, but one rejection rejects the combined promise.
+Local task features must work without internet.
+Validate external data before using it.
+Check response.ok before reading the response body as JSON.

@@ -394,3 +394,68 @@ console.log("Duplicate exact:", validateTaskInput("Write tests", sampleTasks).er
 console.log("Duplicate spaced and cased:", validateTaskInput(" write tests ", sampleTasks).errors.length); // 1
 console.log("Distinct title:", validateTaskInput("Write docs", sampleTasks).errors.length);                // 0
 console.log("Blank title:", validateTaskInput("   ", sampleTasks).errors.length);                          // 1
+// ===== Day 4: suggestions with explicit async state =====
+const suggestButton = document.querySelector("#suggest-button");
+const suggestionsList = document.querySelector("#suggestions-list");
+const suggestionsStatus = document.querySelector("#suggestions-status");
+
+// State is one of: idle, loading, success, error. Only one is shown at a time.
+let suggestionState = "idle";
+let suggestionItems = [];
+let latestRequest = 0;
+
+function renderSuggestions() {
+    suggestionsList.textContent = "";
+    suggestButton.disabled = suggestionState === "loading";
+
+    if (suggestionState === "loading") {
+        suggestionsStatus.textContent = "Loading suggestions...";
+    } else if (suggestionState === "error") {
+        suggestionsStatus.textContent = "Could not load suggestions. Your tasks are safe. Try again.";
+        suggestButton.textContent = "Retry";
+    } else if (suggestionState === "success") {
+        suggestionsStatus.textContent = suggestionItems.length ? "" : "No suggestions found.";
+        suggestButton.textContent = "Reload suggestions";
+        suggestionItems.forEach((suggestion, index) => {
+            const item = document.createElement("li");
+            const button = document.createElement("button");
+            button.type = "button";
+            button.dataset.index = index;
+            button.textContent = suggestion.title;
+            item.append(button);
+            suggestionsList.append(item);
+        });
+    } else {
+        suggestionsStatus.textContent = "";
+    }
+}
+
+async function handleLoadSuggestions() {
+    if (suggestionState === "loading") return;
+
+    const requestId = ++latestRequest;
+    suggestionState = "loading";
+    renderSuggestions();
+
+    try {
+        const items = await loadSuggestions();
+        if (requestId !== latestRequest) return;   // stale response is ignored
+        suggestionItems = items;
+        suggestionState = "success";
+    } catch (error) {
+        if (requestId !== latestRequest) return;
+        console.error("Suggestions failed", error);
+        suggestionState = "error";
+    }
+    renderSuggestions();
+}
+
+suggestButton.addEventListener("click", handleLoadSuggestions);
+
+// Clicking a suggestion copies it into the form. It never overwrites local tasks.
+suggestionsList.addEventListener("click", event => {
+    const button = event.target.closest("button[data-index]");
+    if (!button) return;
+    titleInput.value = suggestionItems[Number(button.dataset.index)].title;
+    titleInput.focus();
+});
